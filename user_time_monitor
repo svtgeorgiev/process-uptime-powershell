@@ -1,0 +1,29 @@
+$username = 'misho'
+# user name of the user that will be monitored
+$emailSender = 'mymonitoraccount@gmail.com'
+$emailRecipient = 'myemail@gmail.com'
+$emailPassword = 'v3ry$Trongpassword'
+$emailSubject = 'User Logon Time Exceeded 2 Hours'
+$emailBody = 'The user ' + $username + ' has been logged in for more than 2 hours.'
+$smtpServer = 'smtp.gmail.com'
+$smtpPort = 587
+
+while ($true) {
+    try {
+        $loggedIn = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty UserName
+# get username drom windows
+        if ($loggedIn -eq $username) {
+            $logonTime = (Get-Date) - (Get-CimInstance -ClassName Win32_UserProfile | Where-Object { $_.LocalPath -match $username } | Select-Object -ExpandProperty Loaded)
+            if ($logonTime.TotalHours -gt 2) {
+                $smtp = New-Object Net.Mail.SmtpClient($smtpServer, $smtpPort)
+                $smtp.EnableSsl = $true
+                $smtp.Credentials = New-Object System.Net.NetworkCredential($emailSender, $emailPassword)
+                $smtp.Send($emailSender, $emailRecipient, $emailSubject, $emailBody)
+            }
+        }
+    } catch {
+        Write-Host "Error occured: $_" -ForegroundColor Red
+# if cant send email
+    }
+    Start-Sleep -Seconds 300
+}
