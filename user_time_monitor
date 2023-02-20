@@ -11,10 +11,12 @@ $smtpPort = 587
 while ($true) {
     try {
         $loggedIn = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty UserName
-# get username drom windows
+       # get username from windows
         if ($loggedIn -eq $username) {
             $logonTime = (Get-Date) - (Get-CimInstance -ClassName Win32_UserProfile | Where-Object { $_.LocalPath -match $username } | Select-Object -ExpandProperty Loaded)
+            # match local path and username then select the time when profile was loaded and get date subtracted by loaded give us the time span of user logged 
             if ($logonTime.TotalHours -gt 2) {
+            # check if more than 2 hours
                 $smtp = New-Object Net.Mail.SmtpClient($smtpServer, $smtpPort)
                 $smtp.EnableSsl = $true
                 $smtp.Credentials = New-Object System.Net.NetworkCredential($emailSender, $emailPassword)
@@ -23,7 +25,8 @@ while ($true) {
         }
     } catch {
         Write-Host "Error occured: $_" -ForegroundColor Red
-# if cant send email
+       # if cant send email wirte host that there is an error
     }
     Start-Sleep -Seconds 300
+    # repeats every 5 mins
 }
